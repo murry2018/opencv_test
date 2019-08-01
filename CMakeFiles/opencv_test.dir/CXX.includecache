@@ -6,11 +6,13 @@
 
 #IncludeRegexTransform: 
 
-/home/leedong/opencv_test/main.cpp
+/home/leedong/github_dir/opencv_test/main.cpp
 iostream
 -
+cmath
+-
 opencv2/opencv.hpp
-/home/leedong/opencv_test/opencv2/opencv.hpp
+/home/leedong/github_dir/opencv_test/opencv2/opencv.hpp
 
 /usr/local/include/opencv/cxcore.h
 opencv2/core/core_c.h
