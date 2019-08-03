@@ -21,11 +21,14 @@ int main()
     Mat yellow_mask;
     Mat white_mask;
 
-    Scalar row_yellow(30-10,80,80);
+    Scalar row_yellow(30-10,100,100);
     Scalar high_yellow(30+10,255,255);
 
     Scalar row_white(170,170,170);
     Scalar high_white(255,255,255);
+
+    Vec3b c_yellow(0,0,255);
+    Vec3b c_white(255,255,255);
 
     double canny_t1 = 50;
     double canny_t2 = 150;
@@ -35,11 +38,12 @@ int main()
     int line_tsh = 20;
     double line_min_length = 10;
     double line_max_gap = 20;
-
+    int mopology_itr = 1;
+    int center = 0;
     double angle;
     int alpha = 1000;
 
-    Mat white(Size(width,height/2),CV_32FC3,Scalar(255,255,255));
+    Mat white(Size(width,height/2),CV_8UC3,Scalar(255,255,255));
 
     namedWindow("original");
     resizeWindow("original",width,height);
@@ -70,10 +74,13 @@ int main()
         inRange(hsv,row_yellow,high_yellow,yellow_mask);
 
         cvtColor(hsv,hsv,CV_HSV2RGB);
-        inRange(hsv, row_white, high_white, white_mask);
-        hsv.setTo(Scalar(255,255,255),yellow_mask);
+        inRange(hsv, row_white, high_white, white_mask); 
+
+        dilate(yellow_mask,yellow_mask,Mat(),Point(-1,-1),mopology_itr);
+        dilate(white_mask,white_mask,Mat(),Point(-1,-1),mopology_itr);
         hsv.setTo(Scalar(0,0,255),white_mask);
-        
+        hsv.setTo(Scalar(255,255,255),yellow_mask);
+
 
         cvtColor(frame.rowRange(height/2, height),gray,CV_BGR2GRAY);
         GaussianBlur(gray,gaussian,Size(3,3),gaussian_sgm);
@@ -81,30 +88,41 @@ int main()
 
         vector<Vec4i> lines;
         HoughLinesP(canny_t,lines,1,CV_PI/180,line_tsh,line_min_length,line_max_gap);
+        double y_sum = 0;
+        int y_n = 0;
+        double w_sum = 0;
+        int w_n = 0;
+
         for(Vec4i l : lines)
         {
             angle = line_ingradient(l[0],l[1],l[2],l[3]);
-            if(fabs(angle)>0.26 && fabs(angle) < 3.7){
-                int dx = abs(l[0] - l[2]);
-                int dy = abs(l[1] - l[3]);
-                if (angle > 0){
-                    l[0] = l[0] + alpha * dx;
-                    l[1] = l[1] + alpha * dy;
-                    l[2] = l[2] - alpha * dx;
-                    l[3] = l[3] - alpha * dy;
-                }
-                else
+            if(fabs(angle)>0.5 && fabs(angle) < 5.6){
+                if(((hsv.at<Vec3b>(Point(l[0],l[1])) == c_white) && (hsv.at<Vec3b>(Point(l[2],l[3])) == c_white))) 
                 {
-                    l[0] = l[0] + alpha * dx;
-                    l[1] = l[1] - alpha * dy;
-                    l[2] = l[2] - alpha * dx;
-                    l[3] = l[3] + alpha * dy;
+                    if(angle<0){
+                        line(white, Point(l[0],l[1]),Point(l[2],l[3]),Scalar(0,255,0),1,LINE_AA);
+                        y_sum += ((height/2-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0]);
+                        y_n++;
+                    }
                 }
-                line(white, Point(l[0],l[1]),Point(l[2],l[3]),Scalar(0,0,255),1,LINE_AA);
+                else if(((hsv.at<Vec3b>(Point(l[0],l[1])) == c_yellow) && (hsv.at<Vec3b>(Point(l[2],l[3])) == c_yellow))){
+                    if(angle>0){
+                        line(white, Point(l[0],l[1]),Point(l[2],l[3]),Scalar(0,0,255),1,LINE_AA);
+                        w_sum += ((height/2-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0]);
+                        w_n++;
+                    }
+                }
             }
         }
-        
-
+        int y_avg = (int)(y_sum/y_n);
+        int w_avg = (int)(w_sum/w_n);
+        if((((y_avg+w_avg)/2) < (width/2)+100) && (((y_avg+w_avg)/2) > (width/2)-100)){
+            center = (y_avg+w_avg)/2;
+        }
+        line(gray,Point(y_avg,0),Point(y_avg,height/2),Scalar(0,0,0),2);
+        line(gray,Point(w_avg,0),Point(w_avg,height/2),Scalar(0,0,0),2);
+        line(gray,Point(center,0),Point(center,height/2),Scalar(0,0,0),2);
+        cout << (width/2) -center <<endl;
         imshow("original",frame);
         imshow("gray",gray);
         imshow("canny_t",canny_t);
@@ -116,6 +134,4 @@ int main()
             break;
     }
    return 0;
-
-
 }
