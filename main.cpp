@@ -2,11 +2,12 @@
 #include <cmath>
 #include "opencv2/opencv.hpp"
 #define __CV4
+//#define __HSV
 
 using namespace std;
 using namespace cv;
 
-#if !defined ( __CV4 )
+#if defined ( __CV4 )
 #  define BGR2HSV CV_BGR2HSV
 #  define HSV2RGB CV_HSV2RGB
 #  define BGR2GRAY CV_BGR2GRAY
@@ -22,17 +23,22 @@ double line_ingradient(int x1, int y1, int x2, int y2)
 }
 
 void init_windows(double width, double height, double roi_height) {
+
   namedWindow("original");
+
+#ifdef __HSV
   namedWindow("hsv");
+  moveWindow("hsv",width*1.2,0);
+#endif
+
   namedWindow("white");
+  moveWindow("white",0, height*1.4);
 
   namedWindow("gray");
-  namedWindow("canny_t");
-
-  moveWindow("hsv",width*1.2,0);
   moveWindow("gray",width*1.2,height*1.4);
-  moveWindow("canny_t",width*1.2*3,height*1.4*1.5);
-  moveWindow("white",0, height*1.2);
+
+  namedWindow("canny_t");
+  moveWindow("canny_t",width*1.2 * 2,height*1.4);
 }
 
 int main()
@@ -63,13 +69,15 @@ int main()
   
   Point before_left_line[2];
   Point before_right_line[2];
-  
+
+#ifdef __HSV
   //For HSV proccessing
   Mat yellow_mask, white_mask;
   Scalar row_yellow(30-10,100,100);
   Scalar high_yellow(30+10,255,255);
   Scalar row_white(170,170,170);
   Scalar high_white(255,255,255);
+#endif
 
   while(1)
     {
@@ -79,6 +87,7 @@ int main()
         break;
       }
 
+#ifdef __HSV
       // TODO: Split HSV processing and Lane detecting logics.
       // HSV image processing logic (Can remove)
       cvtColor(frame.rowRange(height - roi_height,height),hsv,BGR2HSV);
@@ -91,6 +100,7 @@ int main()
       dilate(white_mask,white_mask,Mat(),Point(-1,-1),mopology_itr);
       hsv.setTo(Scalar(0,0,255),white_mask);
       hsv.setTo(Scalar(255,255,255),yellow_mask);
+#endif
 
       //Before Line Detecting Logic
       cvtColor(frame.rowRange(height - roi_height, height),gray,BGR2GRAY);
@@ -187,8 +197,10 @@ int main()
       imshow("gray",gray);
       imshow("canny_t",canny_t);
       imshow("white",white);
-      imshow("hsv",hsv);
 
+#ifdef __HSV
+      imshow("hsv",hsv);
+#endif
       // Set whiteboard empty
       white.setTo(Scalar(255,255,255));
 
