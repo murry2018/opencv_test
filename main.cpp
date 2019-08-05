@@ -43,8 +43,12 @@ void init_windows(double width, double height, double roi_height) {
 
 int main()
 {
-  VideoCapture cap("anticlockwise.mp4");
+  VideoCapture cap("clockwise.mp4");
   Mat frame, gray, gaussian, canny_t, hsv;
+
+  Scalar s_white(255,255,255);
+  Scalar s_black(0,0,0);
+  Scalar s_red(0,0,255);
 
   double canny_t1 = 50;
   double canny_t2 = 150;
@@ -61,9 +65,10 @@ int main()
 
   double angle;
   int alpha = 1000;
+
   vector<Vec4i> lines;
 
-  Mat white(Size(width,roi_height),CV_8UC3,Scalar(255,255,255));
+  Mat white(Size(width,roi_height),CV_8UC3,s_white);
 
   init_windows(width, height, roi_height);
   
@@ -103,7 +108,7 @@ int main()
 #endif
 
       //Before Line Detecting Logic
-      cvtColor(frame.rowRange(height - roi_height, height),gray,BGR2GRAY);
+      cvtColor(frame.rowRange(height - roi_height, height).clone(),gray,BGR2GRAY);
       GaussianBlur(gray,gaussian,Size(3,3),gaussian_sgm);
       Canny(gaussian,canny_t,canny_t1,canny_t2);
       HoughLinesP(canny_t,lines,1,CV_PI/180,line_tsh,line_min_length,line_max_gap);
@@ -124,7 +129,7 @@ int main()
         {
           angle = line_ingradient(l[0],l[1],l[2],l[3]);
           if(fabs(angle)>0.5 && fabs(angle) < 5.6){
-            line(white, Point(l[0],l[1]),Point(l[2],l[3]),Scalar(0,0,255),1,LINE_AA);
+            line(white, Point(l[0],l[1]),Point(l[2],l[3]),s_red,1,LINE_AA);
 
             if(angle<0)
               {
@@ -173,24 +178,27 @@ int main()
       }
 
       //Making long line logics
-      int left_dx = abs(left_line[0].x - left_line[1].x);
-      int left_dy = abs(left_line[0].y - left_line[1].y);
-      int right_dx = abs(right_line[0].x - right_line[1].x);
-      int right_dy = abs(right_line[0].y - right_line[1].y);
+      int left_dx = left_line[0].x - left_line[1].x;
+      int left_dy = left_line[0].y - left_line[1].y;
+      int right_dx = right_line[0].x - right_line[1].x;
+      int right_dy = right_line[0].y - right_line[1].y;
 
-      left_line[0].x += left_dx * alpha;
-      left_line[0].y -= left_dy * alpha;
-      left_line[1].x -= left_dx * alpha;
-      left_line[1].y += left_dy * alpha;
+      left_line[0].x += abs(left_dx) * alpha;
+      left_line[0].y -= abs(left_dy) * alpha;
+      left_line[1].x -= abs(left_dx) * alpha;
+      left_line[1].y += abs(left_dy) * alpha;
 
-      right_line[0].x += right_dx * alpha;
-      right_line[0].y += right_dy * alpha;
-      right_line[1].x -= right_dx * alpha;
-      right_line[1].y -= right_dy * alpha;
+      right_line[0].x += abs(right_dx) * alpha;
+      right_line[0].y += abs(right_dy) * alpha;
+      right_line[1].x -= abs(right_dx) * alpha;
+      right_line[1].y -= abs(right_dy) * alpha;
+
+       //Find Vanishing point
+      
 
       //Draw line
-      line(white,left_line[0],left_line[1],Scalar(0,0,0),2);
-      line(white,right_line[0],right_line[1],Scalar(0,0,0),2);
+      line(white,left_line[0],left_line[1],s_black,2);
+      line(white,right_line[0],right_line[1],s_black,2);
 
       // Frame showing logics
       imshow("original",frame);
@@ -202,7 +210,7 @@ int main()
       imshow("hsv",hsv);
 #endif
       // Set whiteboard empty
-      white.setTo(Scalar(255,255,255));
+      white.setTo(s_white);
 
       if(waitKey(10) == 27)
         break;
