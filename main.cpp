@@ -34,43 +34,45 @@ int main()
     double canny_t2 = 150;
     auto width = cap.get(CAP_PROP_FRAME_WIDTH);
     auto height = cap.get(CAP_PROP_FRAME_HEIGHT);
+    int roi_height = cvRound(height/2.5);
+    int roi_height_y = height - roi_height;
     double gaussian_sgm = 2.0;
     int line_tsh = 20;
-    double line_min_length = 10;
+    double line_min_length = 20;
     double line_max_gap = 20;
     int mopology_itr = 1;
     int center = 0;
     double angle;
     int alpha = 1000;
 
-    Mat white(Size(width,height/2),CV_8UC3,Scalar(255,255,255));
+    Mat white(Size(width,roi_height),CV_8UC3,Scalar(255,255,255));
 
     namedWindow("original");
     resizeWindow("original",width,height);
     namedWindow("hsv");
-    resizeWindow("hsv",width, height/2);
+    resizeWindow("hsv",width, roi_height);
     namedWindow("white");
-    resizeWindow("white",width, height/2);
+    resizeWindow("white",width, roi_height);
     namedWindow("gaussian");
-    resizeWindow("gaussian",width,height/2);
+    resizeWindow("gaussian",width,roi_height);
 
     namedWindow("gray");
-    resizeWindow("gray",width,height/2);
+    resizeWindow("gray",width,roi_height);
     namedWindow("canny_t");
-    resizeWindow("canny",width,height/2);
+    resizeWindow("canny",width,roi_height);
 
     moveWindow("hsv",width*1.2,0);
     moveWindow("gray",width*1.2,height*1.4);
     moveWindow("canny_t",width*1.2*3,height*1.4*1.5);
     moveWindow("white",0, height*1.2);
     moveWindow("gaussian",width*1.2*2,height*1.4);
-    
     while(1)
     {
         cap >> frame;
         if(frame.empty())
             break;
-        cvtColor(frame.rowRange(height/2,height),hsv,CV_BGR2HSV);
+
+        cvtColor(frame.rowRange(roi_height_y,height),hsv,CV_BGR2HSV);
         inRange(hsv,row_yellow,high_yellow,yellow_mask);
 
         cvtColor(hsv,hsv,CV_HSV2RGB);
@@ -81,8 +83,7 @@ int main()
         hsv.setTo(Scalar(0,0,255),white_mask);
         hsv.setTo(Scalar(255,255,255),yellow_mask);
 
-
-        cvtColor(frame.rowRange(height/2, height),gray,CV_BGR2GRAY);
+        cvtColor(frame.rowRange(roi_height_y, height),gray,CV_BGR2GRAY);
         GaussianBlur(gray,gaussian,Size(3,3),gaussian_sgm);
         Canny(gaussian,canny_t,canny_t1,canny_t2);
 
@@ -99,29 +100,30 @@ int main()
             if(fabs(angle)>0.5 && fabs(angle) < 5.6){
                 if(((hsv.at<Vec3b>(Point(l[0],l[1])) == c_white) && (hsv.at<Vec3b>(Point(l[2],l[3])) == c_white))) 
                 {
-                    if(angle<0){
+                     if(angle<0){
                         line(white, Point(l[0],l[1]),Point(l[2],l[3]),Scalar(0,255,0),1,LINE_AA);
-                        y_sum += ((height/2-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0]);
+                        y_sum += ((roi_height-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0]);
                         y_n++;
                     }
                 }
                 else if(((hsv.at<Vec3b>(Point(l[0],l[1])) == c_yellow) && (hsv.at<Vec3b>(Point(l[2],l[3])) == c_yellow))){
                     if(angle>0){
                         line(white, Point(l[0],l[1]),Point(l[2],l[3]),Scalar(0,0,255),1,LINE_AA);
-                        w_sum += ((height/2-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0]);
+                        w_sum += ((roi_height-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0]);
                         w_n++;
                     }
                 }
             }
         }
+
         int y_avg = (int)(y_sum/y_n);
         int w_avg = (int)(w_sum/w_n);
         if((((y_avg+w_avg)/2) < (width/2)+100) && (((y_avg+w_avg)/2) > (width/2)-100)){
             center = (y_avg+w_avg)/2;
         }
-        line(gray,Point(y_avg,0),Point(y_avg,height/2),Scalar(0,0,0),2);
-        line(gray,Point(w_avg,0),Point(w_avg,height/2),Scalar(0,0,0),2);
-        line(gray,Point(center,0),Point(center,height/2),Scalar(0,0,0),2);
+        line(gray,Point(y_avg,0),Point(y_avg,roi_height),Scalar(0,0,0),2);
+        line(gray,Point(w_avg,0),Point(w_avg,roi_height),Scalar(0,0,0),2);
+        line(gray,Point(center,0),Point(center,roi_height),Scalar(0,0,0),2);
         cout << (width/2) -center <<endl;
         imshow("original",frame);
         imshow("gray",gray);
