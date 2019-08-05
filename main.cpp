@@ -93,12 +93,17 @@ int main()
         int y_n = 0;
         double w_sum = 0;
         int w_n = 0;
-
+        int left_min = width;
+        int right_min = width;
+        Point left_line[2];
+        Point right_line[2];
         for(Vec4i l : lines)
         {
             angle = line_ingradient(l[0],l[1],l[2],l[3]);
             if(fabs(angle)>0.5 && fabs(angle) < 5.6){
-                if(((hsv.at<Vec3b>(Point(l[0],l[1])) == c_white) && (hsv.at<Vec3b>(Point(l[2],l[3])) == c_white))) 
+                line(white, Point(l[0],l[1]),Point(l[2],l[3]),Scalar(0,0,255),1,LINE_AA);
+
+                /*if(((hsv.at<Vec3b>(Point(l[0],l[1])) == c_white) && (hsv.at<Vec3b>(Point(l[2],l[3])) == c_white))) 
                 {
                      if(angle<0){
                         line(white, Point(l[0],l[1]),Point(l[2],l[3]),Scalar(0,255,0),1,LINE_AA);
@@ -112,11 +117,29 @@ int main()
                         w_sum += ((roi_height-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0]);
                         w_n++;
                     }
+                }*/
+                if(angle<0)
+                {
+                    int line_ = ((roi_height/3)-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0];
+                    if(left_min > abs(line_-width/2)){
+                        left_min = abs(line_-width/2);
+                        left_line[0] = Point(l[0],l[1]);
+                        left_line[1] = Point(l[2],l[3]);
+                    }
+                }
+                else if(angle>0)
+                {
+                    int line_ = ((roi_height/3)-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0];
+                    if(right_min > abs(line_-width/2)){
+                        right_min = abs(line_-width/2);
+                        right_line[0] = Point(l[0],l[1]);
+                        right_line[1] = Point(l[2],l[3]);
+                    }
                 }
             }
         }
 
-        int y_avg = (int)(y_sum/y_n);
+        /*int y_avg = (int)(y_sum/y_n);
         int w_avg = (int)(w_sum/w_n);
         if((((y_avg+w_avg)/2) < (width/2)+100) && (((y_avg+w_avg)/2) > (width/2)-100)){
             center = (y_avg+w_avg)/2;
@@ -125,6 +148,27 @@ int main()
         line(gray,Point(w_avg,0),Point(w_avg,roi_height),Scalar(0,0,0),2);
         line(gray,Point(center,0),Point(center,roi_height),Scalar(0,0,0),2);
         cout << (width/2) -center <<endl;
+        */
+       int left_dx = left_line[0].x - left_line[1].x;
+       int left_dy = left_line[0].y - left_line[1].y;
+       int right_dx = right_line[0].x - right_line[1].x;
+       int right_dy = right_line[0].y - right_line[1].y;
+
+       left_line[0].x += left_dx * alpha;
+       left_line[0].y += left_dy * alpha;
+       left_line[1].x -= left_dx * alpha;
+       left_line[1].y -= left_dy * alpha;
+
+       right_line[0].x += right_dx *alpha;
+       right_line[0].y += right_dy * alpha;
+       right_line[1].x -= right_dx * alpha;
+       right_line[1].y -= right_dy * alpha;
+
+        line(canny_t,Point(width/2,0),Point(width/2,roi_height),Scalar(255,255,255),2);
+        line(canny_t,Point(0,roi_height/3),Point(width,roi_height/3),Scalar(255,255,255),2);
+        line(gray,left_line[0],left_line[1],Scalar(0,0,0),2);
+        line(gray,right_line[0],right_line[1],Scalar(0,0,0),2);
+      
         imshow("original",frame);
         imshow("gray",gray);
         imshow("canny_t",canny_t);
