@@ -25,7 +25,6 @@ void init_windows(double width, double height, double roi_height) {
   namedWindow("original");
   namedWindow("hsv");
   namedWindow("white");
-  namedWindow("gaussian");
 
   namedWindow("gray");
   namedWindow("canny_t");
@@ -34,7 +33,6 @@ void init_windows(double width, double height, double roi_height) {
   moveWindow("gray",width*1.2,height*1.4);
   moveWindow("canny_t",width*1.2*3,height*1.4*1.5);
   moveWindow("white",0, height*1.2);
-  moveWindow("gaussian",width*1.2*2,height*1.4);
 }
 
 int main()
@@ -54,15 +52,17 @@ int main()
 
   double canny_t1 = 50;
   double canny_t2 = 150;
+
   double width = cap.get(CAP_PROP_FRAME_WIDTH);
   double height = cap.get(CAP_PROP_FRAME_HEIGHT);
   int roi_height = cvRound(height/2.5);
+
   double gaussian_sgm = 2.0;
   int line_tsh = 20;
   double line_min_length = 20;
   double line_max_gap = 20;
   int mopology_itr = 1;
-  int center = 0;
+
   double angle;
   int alpha = 1000;
   vector<Vec4i> lines;
@@ -92,16 +92,13 @@ int main()
       hsv.setTo(Scalar(0,0,255),white_mask);
       hsv.setTo(Scalar(255,255,255),yellow_mask);
 
-      // Lane Detecting Logic
+      //Before Line Detecting Logic
       cvtColor(frame.rowRange(height - roi_height, height),gray,BGR2GRAY);
       GaussianBlur(gray,gaussian,Size(3,3),gaussian_sgm);
       Canny(gaussian,canny_t,canny_t1,canny_t2);
-
       HoughLinesP(canny_t,lines,1,CV_PI/180,line_tsh,line_min_length,line_max_gap);
-      double y_sum = 0;
-      int y_n = 0;
-      double w_sum = 0;
-      int w_n = 0;
+
+      // Line Detecting Logic
       int left_min = width;
       int right_min = width;
       Point left_line[2];
@@ -133,37 +130,36 @@ int main()
           }
         }
 
-      int left_dx = left_line[0].x - left_line[1].x;
-      int left_dy = left_line[0].y - left_line[1].y;
-      int right_dx = right_line[0].x - right_line[1].x;
-      int right_dy = right_line[0].y - right_line[1].y;
+      //Making long line
+      int left_dx = abs(left_line[0].x - left_line[1].x);
+      int left_dy = abs(left_line[0].y - left_line[1].y);
+      int right_dx = abs(right_line[0].x - right_line[1].x);
+      int right_dy = abs(right_line[0].y - right_line[1].y);
 
       left_line[0].x += left_dx * alpha;
-      left_line[0].y += left_dy * alpha;
+      left_line[0].y -= left_dy * alpha;
       left_line[1].x -= left_dx * alpha;
-      left_line[1].y -= left_dy * alpha;
+      left_line[1].y += left_dy * alpha;
 
       right_line[0].x += right_dx *alpha;
       right_line[0].y += right_dy * alpha;
       right_line[1].x -= right_dx * alpha;
       right_line[1].y -= right_dy * alpha;
 
-      line(canny_t,Point(width/2,0),Point(width/2,roi_height),Scalar(255,255,255),2);
-      line(canny_t,Point(0,roi_height/3),Point(width,roi_height/3),Scalar(255,255,255),2);
-      line(gray,left_line[0],left_line[1],Scalar(0,0,0),2);
-      line(gray,right_line[0],right_line[1],Scalar(0,0,0),2);
+      line(white,left_line[0],left_line[1],Scalar(0,0,0),2);
+      line(white,right_line[0],right_line[1],Scalar(0,0,0),2);
 
-      // frame showing logics
+      // Frame showing logics
       imshow("original",frame);
       imshow("gray",gray);
       imshow("canny_t",canny_t);
       imshow("white",white);
-      imshow("gaussian",gaussian);
       imshow("hsv",hsv);
 
       // Set whiteboard empty
       white.setTo(Scalar(255,255,255));
-      if(waitKey(5) == 27)
+
+      if(waitKey(10) == 27)
         break;
     }
   return 0;
