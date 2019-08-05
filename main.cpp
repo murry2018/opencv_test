@@ -39,16 +39,6 @@ int main()
 {
   VideoCapture cap("anticlockwise.mp4");
   Mat frame, gray, gaussian, canny_t, hsv;
-  Mat yellow_mask, white_mask;
-
-  Scalar row_yellow(30-10,100,100);
-  Scalar high_yellow(30+10,255,255);
-
-  Scalar row_white(170,170,170);
-  Scalar high_white(255,255,255);
-
-  Vec3b c_yellow(0,0,255);
-  Vec3b c_white(255,255,255);
 
   double canny_t1 = 50;
   double canny_t2 = 150;
@@ -73,6 +63,13 @@ int main()
   
   Point before_left_line[2];
   Point before_right_line[2];
+  
+  //For HSV proccessing
+  Mat yellow_mask, white_mask;
+  Scalar row_yellow(30-10,100,100);
+  Scalar high_yellow(30+10,255,255);
+  Scalar row_white(170,170,170);
+  Scalar high_white(255,255,255);
 
   while(1)
     {
@@ -83,7 +80,7 @@ int main()
       }
 
       // TODO: Split HSV processing and Lane detecting logics.
-      // HSV image processing logic
+      // HSV image processing logic (Can remove)
       cvtColor(frame.rowRange(height - roi_height,height),hsv,BGR2HSV);
       inRange(hsv,row_yellow,high_yellow,yellow_mask);
 
@@ -145,7 +142,7 @@ int main()
               }
           }
         }
-        
+
       //If can't find line
       if(check_left){
         before_left_line[0] = left_line[0];
@@ -165,7 +162,7 @@ int main()
         right_line[1] = before_right_line[1];
       }
 
-      //Making long line
+      //Making long line logics
       int left_dx = abs(left_line[0].x - left_line[1].x);
       int left_dy = abs(left_line[0].y - left_line[1].y);
       int right_dx = abs(right_line[0].x - right_line[1].x);
@@ -181,6 +178,7 @@ int main()
       right_line[1].x -= right_dx * alpha;
       right_line[1].y -= right_dy * alpha;
 
+      //Draw line
       line(white,left_line[0],left_line[1],Scalar(0,0,0),2);
       line(white,right_line[0],right_line[1],Scalar(0,0,0),2);
 
