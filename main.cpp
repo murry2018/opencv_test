@@ -71,6 +71,9 @@ int main()
 
   init_windows(width, height, roi_height);
   
+  Point before_left_line[2];
+  Point before_right_line[2];
+
   while(1)
     {
       cap >> frame;
@@ -101,8 +104,15 @@ int main()
       // Line Detecting Logic
       int left_min = width;
       int right_min = width;
+
+      int right_min_x = cvRound(width/4);
+      int left_max_x = cvRound((width/4)*3);
+
       Point left_line[2];
+      bool check_left = false;
       Point right_line[2];
+      bool check_right = false;
+
       for(Vec4i l : lines)
         {
           angle = line_ingradient(l[0],l[1],l[2],l[3]);
@@ -111,24 +121,49 @@ int main()
 
             if(angle<0)
               {
-                int line_ = ((roi_height/3)-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0];
-                if(left_min > abs(line_-width/2)){
-                  left_min = abs(line_-width/2);
-                  left_line[0] = Point(l[0],l[1]);
-                  left_line[1] = Point(l[2],l[3]);
+                if(left_max_x>l[0] && left_max_x>l[2]){
+                  int line_ = ((roi_height/3)-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0];
+                  if(left_min > abs(line_-width/2)){
+                    left_min = abs(line_-width/2);
+                    left_line[0] = Point(l[0],l[1]);
+                    left_line[1] = Point(l[2],l[3]);
+                    check_left = true;
+                  }
                 }
               }
             else if(angle>0)
               {
-                int line_ = ((roi_height/3)-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0];
-                if(right_min > abs(line_-width/2)){
-                  right_min = abs(line_-width/2);
-                  right_line[0] = Point(l[0],l[1]);
-                  right_line[1] = Point(l[2],l[3]);
+                if(right_min_x<l[0] && right_min_x<l[2]){
+                  int line_ = ((roi_height/3)-l[1])*((l[0]-l[2])/(l[1]-l[3]))+l[0];
+                  if(right_min > abs(line_-width/2)){
+                    right_min = abs(line_-width/2);
+                    right_line[0] = Point(l[0],l[1]);
+                    right_line[1] = Point(l[2],l[3]);
+                    check_right = true;
+                  }
                 }
               }
           }
         }
+        
+      //If can't find line
+      if(check_left){
+        before_left_line[0] = left_line[0];
+        before_left_line[1] = left_line[1];
+      }
+      else{
+        left_line[0] = before_left_line[0];
+        left_line[1] = before_left_line[1];
+      }
+      
+      if(check_right){
+        before_right_line[0] = right_line[0];
+        before_right_line[1] = right_line[1];
+      }
+      else{
+        right_line[0] = before_right_line[0];
+        right_line[1] = before_right_line[1];
+      }
 
       //Making long line
       int left_dx = abs(left_line[0].x - left_line[1].x);
@@ -141,7 +176,7 @@ int main()
       left_line[1].x -= left_dx * alpha;
       left_line[1].y += left_dy * alpha;
 
-      right_line[0].x += right_dx *alpha;
+      right_line[0].x += right_dx * alpha;
       right_line[0].y += right_dy * alpha;
       right_line[1].x -= right_dx * alpha;
       right_line[1].y -= right_dy * alpha;
