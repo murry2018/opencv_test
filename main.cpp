@@ -64,7 +64,7 @@ int main()
   int mopology_itr = 1;
 
   double angle;
-  int alpha = 1000;
+  int alpha = 100;
 
   vector<Vec4i> lines;
 
@@ -194,11 +194,18 @@ int main()
       right_line[1].y -= abs(right_dy) * alpha;
 
        //Find Vanishing point
-      
+      double left_gredient = (double)left_dy/left_dx;
+      double right_gradient = (double)right_dy/right_dx;
+      double left_y_itc = left_line[0].y - left_gredient * left_line[0].x;
+      double right_y_itc = right_line[0].y - right_gradient * right_line[0].x;
+
+      int mid_x = -(left_y_itc - right_y_itc)/(left_gredient - right_gradient);
 
       //Draw line
       line(white,left_line[0],left_line[1],s_black,2);
       line(white,right_line[0],right_line[1],s_black,2);
+      line(white, Point(mid_x,0),Point(mid_x,roi_height), s_red , 2);
+      cout << (width/2 - mid_x)*(-1) << endl;
 
       // Frame showing logics
       imshow("original",frame);
