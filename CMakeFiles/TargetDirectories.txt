@@ -1,3 +1,0 @@
-/home/leedong/github_dir/opencv_test/CMakeFiles/edit_cache.dir
-/home/leedong/github_dir/opencv_test/CMakeFiles/rebuild_cache.dir
-/home/leedong/github_dir/opencv_test/CMakeFiles/opencv_test.dir
