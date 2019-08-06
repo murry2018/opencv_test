@@ -162,7 +162,7 @@ int main()
       start = true;
       turn++;
     }
-
+    //start가 true일때는 출발선이 있을때, false일때는 출발선이 없을때, turn은 돈 바퀴수,(수정이 필요할수 있음)
     /*if(start)
      cout << start <<' '<< turn << endl;
     else
