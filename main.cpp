@@ -66,6 +66,8 @@ int main()
   double angle;
   int alpha = 100;
 
+  int mid_x_bf = width/2;
+
   vector<Vec4i> lines;
 
   Mat white(Size(width,roi_height),CV_8UC3,s_white);
@@ -193,18 +195,28 @@ int main()
       right_line[1].x -= abs(right_dx) * alpha;
       right_line[1].y -= abs(right_dy) * alpha;
 
-       //Find Vanishing point
+       //Formular to find Vanishing point
       double left_gredient = (double)left_dy/left_dx;
       double right_gradient = (double)right_dy/right_dx;
       double left_y_itc = left_line[0].y - left_gredient * left_line[0].x;
       double right_y_itc = right_line[0].y - right_gradient * right_line[0].x;
 
       int mid_x = -(left_y_itc - right_y_itc)/(left_gredient - right_gradient);
+      int mid_y = left_gredient * mid_x + left_y_itc;
+      
+      if(mid_y > 0 && mid_y < roi_height)
+        mid_x = mid_x_bf;
+      else
+          mid_x_bf = mid_x;
 
       //Draw line
       line(white,left_line[0],left_line[1],s_black,2);
       line(white,right_line[0],right_line[1],s_black,2);
       line(white, Point(mid_x,0),Point(mid_x,roi_height), s_red , 2);
+
+      //Result
+      string str =string("x: ") + to_string((width/2 - mid_x)*(-1));
+      putText(white,str,Point(10,20),1 ,1, s_black);
       cout << (width/2 - mid_x)*(-1) << endl;
 
       // Frame showing logics
@@ -218,8 +230,10 @@ int main()
 #endif
       // Set whiteboard empty
       white.setTo(s_white);
-
-      if(waitKey(10) == 27)
+      int ke = waitKey(10);
+      if(ke == ' ')
+        waitKey();
+      else if(ke == 27)
         break;
     }
   return 0;
