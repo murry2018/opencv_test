@@ -40,12 +40,15 @@ void init_windows(double width, double height, double roi_height)
 
   namedWindow("canny_t");
   moveWindow("canny_t", width * 1.2 * 2, height * 1.4);
+
+  namedWindow("binary");
+  moveWindow("binary", width * 1.2, 0);
 }
 
 int main()
 {
-  VideoCapture cap("clockwise.mp4");
-  Mat frame, gray, gaussian, canny_t, hsv;
+  VideoCapture cap("anticlockwise.mp4");
+  Mat frame, gray, gaussian, canny_t, hsv, binary;
 
   Scalar s_white(255, 255, 255);
   Scalar s_black(0, 0, 0);
@@ -70,6 +73,10 @@ int main()
   int alpha = 100;
 
   int mid_x_bf = width / 2;
+
+  int white_threshold =2000;
+  bool start = false;
+  int turn = 0;
 
   vector<Vec4i> lines;
 
@@ -116,10 +123,52 @@ int main()
     //Before Line Detecting Logic
     cvtColor(frame.rowRange(height - roi_height, height).clone(), gray, BGR2GRAY);
     GaussianBlur(gray, gaussian, Size(3, 3), gaussian_sgm);
+    threshold(gray.colRange(width / 4, width * 3 / 4), binary, 0, 255, THRESH_OTSU);
     Canny(gaussian, canny_t, canny_t1, canny_t2);
     HoughLinesP(canny_t, lines, 1, CV_PI / 180, line_tsh, line_min_length, line_max_gap);
 
-    // Line Detecting Logic
+    //find start line
+    int count_white[4] = {0,0,0,0};
+    for (int h = 0; h < roi_height; h++)
+    {
+      for (int w = 0; w < width / 2; w++)
+      {
+        if (binary.at<bool>(Point(w,h)) == 255)
+        {
+          if (w < (width / 4) && h < (roi_height / 2))
+            count_white[0]++;
+          else if (w >= (width/4) && h < (roi_height / 2))
+            count_white[1]++;
+          else if (w < (width / 4) && h >=(roi_height / 2))
+            count_white[2]++;
+          else if (w >= (width / 4) && h>= (roi_height / 2))
+            count_white[3]++;
+        }
+      }
+    }
+    //line(binary, Point(width/4,0),Point(width/4,roi_height),Scalar(255,255,255),3);
+    //line(binary,Point(0,roi_height/2),Point(width/2,roi_height/2),Scalar(255,255,255),3);
+    //cout << count_white[0] << ' ' << count_white[1]<< ' ' << count_white[2] << ' ' << count_white[3] <<  endl;
+    //cout << abs((width/4)*(roi_height/2) - count_white[0]*2) - abs((width/4)*(roi_height/2) - count_white[1]*2) << ' '
+    //<< abs((width/4)*(roi_height/2) - count_white[2]*2) - abs((width/4)*(roi_height/2) - count_white[3]*2) << endl;
+    if(start)
+    {
+      if(!(count_white[0] > white_threshold && count_white[1] > white_threshold))
+        if((abs((width/4)*(roi_height/2) - count_white[2]*2) - abs((width/4)*(roi_height/2) - count_white[3]*2)<50))
+          start = false;
+    }
+    else if(count_white[0] > white_threshold && count_white[1] > white_threshold)
+    {
+      start = true;
+      turn++;
+    }
+
+    /*if(start)
+     cout << start <<' '<< turn << endl;
+    else
+      cout << 0 << ' ' <<  turn << endl;*/
+
+    // Line Detecting Logics
     int left_min = width;
     int right_min = width;
 
@@ -237,6 +286,7 @@ int main()
     imshow("gray", gray);
     imshow("canny_t", canny_t);
     imshow("white", white);
+    imshow("binary", binary);
 
 #ifdef __HSV
     imshow("hsv", hsv);
