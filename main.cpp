@@ -203,7 +203,7 @@ int main()
 
       int mid_x = -(left_y_itc - right_y_itc)/(left_gredient - right_gradient);
       int mid_y = left_gredient * mid_x + left_y_itc;
-      
+
       if(mid_y > 0 && mid_y < roi_height)
         mid_x = mid_x_bf;
       else
@@ -217,7 +217,6 @@ int main()
       //Result
       string str =string("x: ") + to_string((width/2 - mid_x)*(-1));
       putText(white,str,Point(10,20),1 ,1, s_black);
-      cout << (width/2 - mid_x)*(-1) << endl;
 
       // Frame showing logics
       imshow("original",frame);
