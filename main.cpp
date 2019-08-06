@@ -7,7 +7,7 @@
 using namespace std;
 using namespace cv;
 
-#if defined ( __CV4 )
+#if !defined ( __CV4 )
 #  define BGR2HSV CV_BGR2HSV
 #  define HSV2RGB CV_HSV2RGB
 #  define BGR2GRAY CV_BGR2GRAY
