@@ -283,10 +283,10 @@ int main()
     line(white, Point(mid_x, 0), Point(mid_x, roi_height), s_blue, 2);
 
     //Result
-    string str = string("x: ") + to_string((width / 2 - mid_x) * (-1));
+    string str = string("x: ") + to_string((width / 2 - mid_x));
     putText(white, str, Point(10, 20), 1, 1, s_black);
 #ifdef __DIFF
-    cout << (width/2 - mid_x)*-1 << endl;
+    cout << (width/2 - mid_x) << endl;
 #endif
 
     // Frame showing logics
