@@ -2,6 +2,8 @@
 #include <cmath>
 #include "opencv2/opencv.hpp"
 #define __CV4
+//#define __START //print start line
+#define __DIFF //print diff
 //#define __HSV
 
 using namespace std;
@@ -163,10 +165,13 @@ int main()
       turn++;
     }
     //start가 true일때는 출발선이 있을때, false일때는 출발선이 없을때, turn은 돈 바퀴수,(수정이 필요할수 있음)
-    /*if(start)
-     cout << start <<' '<< turn << endl;
+
+#ifdef __START
+    if(start)
+    cout << start <<' '<< turn << endl;
     else
-      cout << 0 << ' ' <<  turn << endl;*/
+    cout << 0 << ' ' <<  turn << endl;
+#endif
 
     // Line Detecting Logics
     int left_min = width;
@@ -280,6 +285,9 @@ int main()
     //Result
     string str = string("x: ") + to_string((width / 2 - mid_x) * (-1));
     putText(white, str, Point(10, 20), 1, 1, s_black);
+#ifdef __DIFF
+    cout << (width/2 - mid_x)*-1 << endl;
+#endif
 
     // Frame showing logics
     imshow("original", frame);
